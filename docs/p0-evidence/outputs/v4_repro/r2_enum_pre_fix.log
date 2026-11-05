@@ -1,0 +1,8 @@
+=== 反例 2: min x  s.t.  x=1, x=1, x>=0 ===
+真实解: x=1, z=1, 唯一可行极点
+enumerate_optimum -> {'status': 'no_vertices', 'z_best': None, 'x_best': None, 'n_feasible': 0}
+simplex           -> {'solver': 'self', 'status': 'optimal', 'x': [1.0], 'z': 1.0, 'iters': 1, 'phase': None, 'reason': None}
+
+=== 反例 2b: x=1, x=2 (矛盾) ===
+enumerate_optimum -> {'status': 'no_vertices', 'z_best': None, 'x_best': None, 'n_feasible': 0}
+simplex           -> {'solver': 'self', 'status': 'infeasible', 'x': None, 'z': None, 'iters': 1, 'phase': None, 'reason': None}

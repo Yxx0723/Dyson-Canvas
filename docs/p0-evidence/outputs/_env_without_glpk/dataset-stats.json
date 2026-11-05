@@ -1,0 +1,86 @@
+{
+ "provenance": {
+  "game_version": {
+   "DSP": "0.10.29.21950"
+  },
+  "source_bytes": 268224,
+  "source_path": "public/data/dsp/data.json",
+  "source_repo": "factoriolab/factoriolab",
+  "source_sha256": "940d5d6eac72b250ddb87cd717189e87eb9a1645d28cfb6081b28a754dc1684b"
+ },
+ "counts": {
+  "items": 182,
+  "recipes": 189,
+  "machines": 53,
+  "modules": 6
+ },
+ "producers_distribution": {
+  "0": 16,
+  "1": 148,
+  "2": 13,
+  "3": 3,
+  "4": 1,
+  "8": 1
+ },
+ "items_with_multiple_recipes": 18,
+ "multi_output_recipes": [
+  "gas-giant",
+  "graphene-advanced",
+  "ice-giant",
+  "mass-energy-storage",
+  "plasma-refining",
+  "x-ray-cracking"
+ ],
+ "mining_recipes": [
+  "coal-vein",
+  "copper-vein",
+  "crude-oil-seep",
+  "fire-ice-vein",
+  "fractal-silicon-vein",
+  "gas-giant",
+  "gas-giant-deuterium",
+  "gas-giant-hydrogen",
+  "ice-giant",
+  "ice-giant-gas-hydrate",
+  "ice-giant-hydrogen",
+  "iron-vein",
+  "kimberlite-vein",
+  "ocean",
+  "optical-grating-crystal-vein",
+  "organic-crystal-vein",
+  "silicium-vein",
+  "spiniform-stalagmite-crystal-vein",
+  "stone-vein",
+  "sulphuric-acid-vein",
+  "titanium-vein",
+  "unipolar-magnet-vein"
+ ],
+ "item_graph": {
+  "nodes": 174,
+  "edges": 444
+ },
+ "scc_total": 2,
+ "scc_material": 1,
+ "scc_roundtrip": 1,
+ "scc_detail": [
+  {
+   "items": [
+    "accumulator",
+    "accumulator-full"
+   ],
+   "kind": "roundtrip",
+   "recipes": [
+    "accumulator-discharge",
+    "accumulator-full"
+   ]
+  },
+  {
+   "items": [
+    "hydrogen",
+    "refined-oil"
+   ],
+   "kind": "material",
+   "recipes": null
+  }
+ ]
+}

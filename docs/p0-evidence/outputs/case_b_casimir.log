@@ -1,0 +1,139 @@
+
+==============================================================================
+案例 B · 卡西米尔晶体生产链
+==============================================================================
+游戏版本   : 0.10.29.21950
+数据来源   : factoriolab/factoriolab -> public/data/dsp/data.json
+源文件 SHA : 940d5d6eac72b250…  (268224 bytes)
+目标         : Casimir Crystal (casimir-crystal) 1.0/s
+建筑         : assembling-machine-3 / chemical-plant / arc-smelter / oil-refinery
+增产剂        : 无
+截断层        : hydrogen（氢气先按外购处理，用于暴露树模型缺陷）
+
+-- B.0 原始配方（数据原样） ------------------------------------------------------------
+  配方                              工时 输入                                     输出
+  --------------------------------------------------------------------------------------------------------
+  casimir-crystal                  4 graphene×2 hydrogen×12 titanium-crystal×1 casimir-crystal×1
+  graphene                         3 energetic-graphite×3 sulfuric-acid×1   graphene×2
+  energetic-graphite               2 coal×2                                 energetic-graphite×1
+  sulfuric-acid                    6 refined-oil×6 stone×8 water×4          sulfuric-acid×4
+  titanium-crystal                 4 organic-crystal×1 titanium-ingot×3     titanium-crystal×1
+  organic-crystal                  6 plastic×2 refined-oil×1 water×1        organic-crystal×1
+  plastic                          3 energetic-graphite×1 refined-oil×2     plastic×1
+  titanium-ingot                   2 titanium-ore×2                         titanium-ingot×1
+  plasma-refining                  4 crude-oil×2                            hydrogen×1 refined-oil×2
+  casimir-crystal-advanced         4 graphene×2 hydrogen×12 optical-grating-crystal×8 casimir-crystal×1
+  graphene-advanced                2 fire-ice×2                             graphene×2 hydrogen×1
+
+-- B.1 配方依赖（真实层级，未去重） --------------------------------------------------------
+Casimir Crystal          ← casimir-crystal              t=4     in={'graphene': 2, 'hydrogen': 12, 'titanium-crystal': 1}
+  Graphene                 ← graphene                     t=3     in={'energetic-graphite': 3, 'sulfuric-acid': 1}
+    Energetic Graphite       ← energetic-graphite           t=2     in={'coal': 2}
+      Coal                     ← coal-vein                    t=2     in={}
+    Sulfuric Acid            ← sulfuric-acid                t=6     in={'refined-oil': 6, 'stone': 8, 'water': 4}
+      Refined Oil              ← plasma-refining              t=4     in={'crude-oil': 2}
+      Stone                    ← stone-vein                   t=2     in={}
+      Water                    ← ocean                        t=1.2   in={}
+  Hydrogen                 ← gas-giant                    t=1     in={}
+  Titanium Crystal         ← titanium-crystal             t=4     in={'organic-crystal': 1, 'titanium-ingot': 3}
+    Organic Crystal          ← organic-crystal              t=6     in={'plastic': 2, 'refined-oil': 1, 'water': 1}
+      Plastic                  ← plastic                      t=3     in={'energetic-graphite': 1, 'refined-oil': 2}
+      Refined Oil              ← plasma-refining              t=4     in={'crude-oil': 2}
+      Water                    ← ocean                        t=1.2   in={}
+    Titanium Ingot           ← titanium-ingot               t=2     in={'titanium-ore': 2}
+      Titanium Ore             ← titanium-vein                t=2     in={}
+
+-- B.2 递归展开（hydrogen 截断为外购） --------------------------------------------------
+- [制造] Casimir Crystal                 1/s   配方=casimir-crystal            建筑=Assembling Machine Mk.III 台数=2.6667
+  - [制造] Graphene                        2/s   配方=graphene                   建筑=Chemical Plant         台数=3.0000
+    - [制造] Energetic Graphite              3/s   配方=energetic-graphite         建筑=Arc Smelter            台数=6.0000
+      - [矿脉] Coal                            6/s   配方=coal-vein                  建筑=Mining Machine         台数=12.0000   (矿脉（Mining Machine 12.000 台，单列统计）)
+    - [制造] Sulfuric Acid                   1/s   配方=sulfuric-acid              建筑=Chemical Plant         台数=1.5000
+      - [制造] Refined Oil                   1.5/s   配方=plasma-refining            建筑=Oil Refinery           台数=3.0000
+        - [矿脉] Crude Oil                     1.5/s   配方=crude-oil-seep             建筑=Oil Extractor          台数=1.5000   (矿脉（Oil Extractor 1.500 台，单列统计）)
+      - [矿脉] Stone                           2/s   配方=stone-vein                 建筑=Mining Machine         台数=4.0000   (矿脉（Mining Machine 4.000 台，单列统计）)
+      - [矿脉] Water                           1/s   配方=ocean                      建筑=Water Pump             台数=1.2000   (矿脉（Water Pump 1.200 台，单列统计）)
+  - [截断] Hydrogen                       12/s   (用户指定终止层)
+  - [制造] Titanium Crystal                1/s   配方=titanium-crystal           建筑=Assembling Machine Mk.III 台数=2.6667
+    - [制造] Organic Crystal                 1/s   配方=organic-crystal            建筑=Chemical Plant         台数=6.0000
+      - [制造] Plastic                         2/s   配方=plastic                    建筑=Chemical Plant         台数=6.0000
+        - [制造] Energetic Graphite              2/s   配方=energetic-graphite         建筑=Arc Smelter            台数=4.0000
+          - [矿脉] Coal                            4/s   配方=coal-vein                  建筑=Mining Machine         台数=8.0000   (矿脉（Mining Machine 8.000 台，单列统计）)
+        - [制造] Refined Oil                     4/s   配方=plasma-refining            建筑=Oil Refinery           台数=8.0000
+          - [矿脉] Crude Oil                       4/s   配方=crude-oil-seep             建筑=Oil Extractor          台数=4.0000   (矿脉（Oil Extractor 4.000 台，单列统计）)
+      - [制造] Refined Oil                     1/s   配方=plasma-refining            建筑=Oil Refinery           台数=2.0000
+        - [矿脉] Crude Oil                       1/s   配方=crude-oil-seep             建筑=Oil Extractor          台数=1.0000   (矿脉（Oil Extractor 1.000 台，单列统计）)
+      - [矿脉] Water                           1/s   配方=ocean                      建筑=Water Pump             台数=1.2000   (矿脉（Water Pump 1.200 台，单列统计）)
+    - [制造] Titanium Ingot                  3/s   配方=titanium-ingot             建筑=Arc Smelter            台数=6.0000
+      - [矿脉] Titanium Ore                    6/s   配方=titanium-vein              建筑=Mining Machine         台数=12.0000   (矿脉（Mining Machine 12.000 台，单列统计）)
+
+-- B.3 建筑数量：实际 vs 手算 ---------------------------------------------------------
+  建筑                                   手算          求解器         偏差 判定
+  ----------------------------------------------------------------------
+  Assembling Machine Mk.III        5.3333       5.3333  +0.00e+00 PASS
+  Chemical Plant                  16.5000      16.5000  +0.00e+00 PASS
+  Arc Smelter                     16.0000      16.0000  +0.00e+00 PASS
+  Oil Refinery                    13.0000      13.0000  +0.00e+00 PASS
+  制造设备合计（小数）                 50.8333 台
+  制造设备合计（按配方分组取整）            52 台
+    分组明细（理论台数 → 建设台数）:
+      plasma-refining        Oil Refinery            13.0000 → 13
+      energetic-graphite     Arc Smelter             10.0000 → 10
+      organic-crystal        Chemical Plant           6.0000 → 6
+      plastic                Chemical Plant           6.0000 → 6
+      titanium-ingot         Arc Smelter              6.0000 → 6
+      graphene               Chemical Plant           3.0000 → 3
+      casimir-crystal        Assembling Machine Mk.III   2.6667 → 3
+      titanium-crystal       Assembling Machine Mk.III   2.6667 → 3
+      sulfuric-acid          Chemical Plant           1.5000 → 2
+  矿脉开采设备                     Mining Machine 36.00, Oil Extractor 6.50, Water Pump 2.40
+  总功耗（usage 口径）              35880.0 kW = 35.88 MW
+
+-- B.4 中间产品需求与原料汇总 -----------------------------------------------------------
+  原料（外购）                               手算          求解器 判定
+  -----------------------------------------------------------
+  Coal                            10.0000      10.0000 PASS
+  Stone                            2.0000       2.0000 PASS
+  Water                            2.0000       2.0000 PASS
+  Titanium Ore                     6.0000       6.0000 PASS
+  Crude Oil                        6.5000       6.5000 PASS
+  Hydrogen                        12.0000      12.0000 PASS
+
+-- B.5 配方切换对比（同一目标，不同上游） -----------------------------------------------------
+  配方组合                                        设备(整)    设备(小数)     功耗MW     原料种类
+  -----------------------------------------------------------------------------
+  基准：石墨烯(常规) + 卡西米尔(常规)                          52     50.83    35.88        6
+  高级卡西米尔 + 常规石墨烯                                 17     16.17    11.16        6
+  常规卡西米尔 + 高级石墨烯                                 40     39.33    29.04        6
+  高级卡西米尔 + 高级石墨烯                                  5      4.67     4.32        3
+  说明: 高级卡西米尔用「光栅晶体 ×8」替代「钛晶 ×1」，上游完全不同；
+        高级石墨烯用「可燃冰 ×2」一步产出石墨烯+氢气，砍掉整条高能石墨/硫酸支链。
+        这是「多种配方生产同一物品」的真实来源 —— 共 18 个物品拥有多条配方。
+
+-- B.6 递归模型的边界（本案例最重要的发现） ----------------------------------------------------
+  等离子精炼: {'crude-oil': 2} -> {'hydrogen': 1, 'refined-oil': 2}  (t=4)
+  本方案共消费精炼油 6.5000/s（硫酸 1.5 + 塑料 4.0 + 有机晶体 1.0），对应等离子精炼 3.2500 次/s，
+  同步副产氢气 3.2500/s。
+
+  但树状求解器把氢气 12.00/s 全部记为外购，
+  同时又把 3.25/s 的副产氢记入净流量 —— 两者互相矛盾。
+  物料守恒校验结果: 不自洽  偏差={'hydrogen': 3.25}
+  （此处「不自洽」是本案例要证明的结论，判定见 B.7 的「预期失败」一项）
+
+  结论: 树模型在「同一物品既是输入又是副产物」时必然失真。这不是实现 bug，
+        而是递归范式的固有局限，必须由案例 D 的矩阵模型解决。
+
+-- B.7 结论 --------------------------------------------------------------------
+  [PASS] B1 多级展开 — 制造层 12 个、叶子 10 个，全部登记为外部供给
+  [PASS] B2 多输入配方 — 卡西米尔 3 输入、硫酸 3 输入、有机晶体 3 输入均逐项等于 速率×用量
+  [PASS] B3 配方切换 — 高级组合用 光栅晶体/可燃冰 替代 钛晶/高能石墨支链，原料集合发生实质变化
+  [PASS] B4 中间产品合并 — 高能石墨被石墨烯(3.0)与塑料(2.0)双重消费，合并为 5.0000/s
+  [PASS] B4b 原料汇总 vs 手算 — 6 项原料逐项一致，无多余外购
+  [PASS] B5 建筑数量（小数） — 与手算逐项一致（容差 1e-6）
+  [PASS] B5b 整数建设（按配方分组） — 分组取整 52 台；若先按机器合并再取整则为 52 台
+  [PASS] B6 递归模型边界（预期失败） — 守恒校验确实失败，且偏差 +3.2500/s 恰等于副产氢 3.2500/s（若偏差消失，说明前提已变，此结论须重审）
+
+  判定汇总: PASS 8 · FAIL 0 · SKIP 0
+  总体判定: PASS
+  退出码  : 0
+  证据等级: B1-B5b 已通过独立测试验证；B6 为「预期失败被正确检出」的定量证据

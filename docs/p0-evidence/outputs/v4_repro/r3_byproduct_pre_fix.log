@@ -1,0 +1,27 @@
+energy-matrix: in={'energetic-graphite': 2, 'hydrogen': 2} out={'energy-matrix': 1} time=6
+antimatter-fuel-rod: in={'annihilation-constraint-sphere': 1, 'antimatter': 12, 'hydrogen': 12, 'titanium-alloy': 1} out={'antimatter-fuel-rod': 2} time=24
+critical-photon: in={} out={'critical-photon': 6} time=60
+
+=== analyze 目标 能量矩阵2/s + 反物质1/s ===
+  环内物品（SCC）      : ['Hydrogen', 'Refined Oil']
+  入边物品（外部供给）  : ['Coal', 'Crude Oil']
+  出边物品（对外供应）  : ['Energetic Graphite']
+  平衡行               : ['Energetic Graphite', 'Hydrogen', 'Refined Oil']
+  入选配方（3 条）    : ['plasma-refining', 'reforming-refine', 'x-ray-cracking']
+    排除 accumulator-discharge        理由: 状态往返配方（净物料为零）
+    排除 accumulator-full             理由: 状态往返配方（净物料为零）
+    排除 energetic-graphite           理由: 不满足规则 A/B，未参与环路
+    排除 gas-giant                    理由: mining 采集配方（属外购通道，不是生产列）
+    排除 gas-giant-hydrogen           理由: mining 采集配方（属外购通道，不是生产列）
+    排除 graphene-advanced            理由: 产物越界: ['graphene']
+    排除 ice-giant                    理由: mining 采集配方（属外购通道，不是生产列）
+    排除 ice-giant-hydrogen           理由: mining 采集配方（属外购通道，不是生产列）
+    排除 mass-energy-storage          理由: 产物越界: ['antimatter']
+  demand: {'energetic-graphite': 4.0, 'hydrogen': 4.0, 'refined-oil': 0.0}
+
+  trace:
+    · energy-matrix 2.0000/s ← energy-matrix ×2.0000
+      ⊣ energetic-graphite +4.0000/s（边界物品，停止展开）
+      ⊣ hydrogen +4.0000/s（边界物品，停止展开）
+    · antimatter 1.0000/s ← mass-energy-storage ×0.5000
+      · critical-photon 1.0000/s ← critical-photon ×0.1667

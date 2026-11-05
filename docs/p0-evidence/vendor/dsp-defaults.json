@@ -1,0 +1,35 @@
+{
+  "excludedRecipes": [
+    "carbon-nanotube-advanced",
+    "casimir-crystal-advanced",
+    "critical-photon-dark-fog",
+    "critical-photon-graviton",
+    "crystal-silicon-advanced",
+    "diamond-advanced",
+    "fire-ice-vein",
+    "gas-giant",
+    "graphene-advanced",
+    "ice-giant",
+    "organic-crystal-original",
+    "particle-container-advanced",
+    "photon-combiner-advanced",
+    "silicon-ore",
+    "x-ray-cracking"
+  ],
+  "maxMachineRank": [
+    "df-negentropy-smelter",
+    "df-recomposing-assembler",
+    "df-self-evolution-lab",
+    "quantum-chemical-plant"
+  ],
+  "minMachineRank": [
+    "arc-smelter",
+    "assembling-machine-1",
+    "chemical-plant",
+    "matrix-lab"
+  ],
+  "moduleRank": ["proliferator-3-products"],
+  "fuelRank": ["coal"],
+  "minBeltRank": ["conveyor-belt-1"],
+  "maxBeltRank": ["conveyor-belt-3"]
+}

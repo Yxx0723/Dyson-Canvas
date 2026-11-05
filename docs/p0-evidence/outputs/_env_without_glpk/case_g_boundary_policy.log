@@ -1,0 +1,74 @@
+
+==============================================================================
+案例 G · 处置策略与目标函数
+==============================================================================
+游戏版本   : 0.10.29.21950
+数据来源   : factoriolab/factoriolab -> public/data/dsp/data.json
+源文件 SHA : 940d5d6eac72b250…  (268224 bytes)
+目标         : Casimir Crystal 1.0/s
+边界         : 由 lib/boundary 从真实图自动推导（非手写矩阵）
+说明         : 重点：什么允许被消化、由哪台建筑消化、按什么优先级优化
+
+-- G.1 燃料类型与设施匹配（不能「有 fuel 字段就能烧」） -------------------------------------------
+  建筑接受类型（来自 machine.fuel_types 与 machine.consumption）:
+    artificial-star            fuel_types=['antimatter']
+    mini-fusion-power-plant    fuel_types=['nuclear']
+    ray-receiver-dark-fog      consumption={'df-dark-fog-lens': 0.1}
+    ray-receiver-pro           consumption={'graviton-lens': 0.1}
+    thermal-power-plant        fuel_types=['chemical']
+
+  类别                        数量 物品
+  ---------------------------------------------------------------------------------------
+  可燃烧 · antimatter           2 antimatter-fuel-rod, df-strange-annihilation-fuel-rod
+  可燃烧 · chemical            21 carbon-nanotube, coal, crude-oil, deuterium, df-combustible-unit, df-c…
+  可燃烧 · nuclear              1 deuteron-fuel-rod
+  可被建筑消耗（非燃料）                2 df-dark-fog-lens, graviton-lens
+  可经配方转化                     1 accumulator-full
+  [PASS] G1 燃料按类型分派设施 — 27 个 fuel 物品分为 chemical 21 / nuclear 1 / antimatter 2 / 消耗品 2 / 转化 1
+
+-- G.2 处置路径的覆盖性（不允许有悬空燃料） ----------------------------------------------------
+  物品                      有fuel 可用处置路径
+  ------------------------------------------------------------------------------------
+  Refined Oil                 是 燃烧 → thermal-power-plant（chemical）
+  Hydrogen                    是 燃烧 → thermal-power-plant（chemical）
+  Energetic Graphite          是 燃烧 → thermal-power-plant（chemical）
+  Sulfuric Acid               否 无任何处置路径
+  Graviton Lens               是 消耗 → ray-receiver-pro（0.1/s·台）
+  Accumulator (full)          是 转化 → accumulator-discharge
+  Deuteron Fuel Rod           是 燃烧 → mini-fusion-power-plant（nuclear）
+  Antimatter Fuel Rod         是 燃烧 → artificial-star（antimatter）
+  [PASS] G2 全部燃料都有明确处置设施 — 27 个全部有设施兜底（chemical→火电站、nuclear→聚变站、antimatter→人造恒星、透镜→射线接收站、满电池→能源交换站）
+  [PASS] G2b 不可处置物品确实不可处置 — 硫酸既无 fuel 字段也无 mining 配方，松弛列被拒绝 —— 不是被跳过，而是被证明不可行
+
+-- G.3 同一模型：允许焚烧 vs 禁止焚烧 -----------------------------------------------------
+  说明: 本 LP 的放空列**只**使用 chemical 燃料进火电站这一条通道（can_burn_chemical）；
+        nuclear / antimatter / 透镜消耗 / 满电池↔空电池 均未进矩阵，
+        它们是 G.1 已识别的数据关系，不是本模型的可行解空间（见报告 §7.2.1）。
+
+  策略                       状态               配方速率合计       外购合计       放空合计
+  ----------------------------------------------------------------------
+  允许焚烧（火电站）                optimal         12.0000     0.0000     0.8333
+  禁止焚烧                     optimal         10.7500     1.2500     0.0000
+  [PASS] G3 焚烧开关改变可行解 — 允许时放空 0.8333/s；禁止时放空 0.0000/s
+
+-- G.4 加权求和 vs 字典序 -----------------------------------------------------------
+  目标函数                                 外购合计       放空合计       配方速率合计
+  -----------------------------------------------------------------
+  (100, 10, 1) 外购≫放空≫运行              0.0000     0.8333      12.0000
+  (1, 1, 1) 等权                       1.2500     0.0000      10.7500
+  (1, 100, 1) 放空重罚                   1.2500     0.0000      10.7500
+  字典序 外购→放空→运行                       0.0000     0.8333      12.0000
+  [PASS] G4 加权法答案随权重漂移 — 4 种目标函数给出 2 组不同答案：[(0.0, 0.833333), (0.0, 0.833333), (1.25, 0.0), (1.25, 0.0)]
+
+-- G.5 字典序解的逐项守恒 -------------------------------------------------------------
+    Energetic Graphite   净   5.0000 + 外购  0.0000 - 放空  0.8333 =   5.0000  期望  5.0000  ok
+    Hydrogen             净  12.0000 + 外购  0.0000 - 放空  0.0000 =  12.0000  期望 12.0000  ok
+    Refined Oil          净   6.5000 + 外购  0.0000 - 放空  0.0000 =   6.5000  期望  6.5000  ok
+  [PASS] G5 字典序解满足全部需求 — 逐项满足（容差 1e-6）；本节只覆盖 LP 边界行，环外展开与环内衔接的全局账见案例 H4/H8
+  [PASS] G6 生产速率非负 — 全部变量 >= 0
+
+  判定汇总: PASS 7 · FAIL 0 · SKIP 0
+  总体判定: PASS
+  退出码  : 0
+  证据等级: G1/G2 已通过独立测试验证（由数据集字段推导）；
+            G3-G6 已通过独立测试验证（自动边界 + 自实现 LP + 回代校验）

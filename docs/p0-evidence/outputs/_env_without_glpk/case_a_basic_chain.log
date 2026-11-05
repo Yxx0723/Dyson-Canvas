@@ -1,0 +1,111 @@
+
+==============================================================================
+案例 A · 基础递归生产链
+==============================================================================
+游戏版本   : 0.10.29.21950
+数据来源   : factoriolab/factoriolab -> public/data/dsp/data.json
+源文件 SHA : 940d5d6eac72b250…  (268224 bytes)
+目标         : Electromagnetic Matrix (electromagnetic-matrix) 1.0/s
+建筑         : assembling-machine-3 / arc-smelter / matrix-lab
+增产剂        : 无
+
+-- A.0 原始配方（数据原样，未加工） --------------------------------------------------------
+  配方                         工时(s) 输入                             输出                         可选建筑数
+  ------------------------------------------------------------------------------------------------
+  electromagnetic-matrix         3 circuit-board:1×magnetic-coil:1 electromagnetic-matrix:1         2
+  circuit-board                  1 copper-ingot:1×iron-ingot:2    circuit-board:2                4
+  magnetic-coil                  1 copper-ingot:1×magnet:2        magnetic-coil:2                4
+  copper-ingot                   1 copper-ore:1                   copper-ingot:1                 3
+  iron-ingot                     1 iron-ore:1                     iron-ingot:1                   3
+  magnet                       1.5 iron-ore:1                     magnet:1                       3
+
+-- A.1 计算模型 ------------------------------------------------------------------
+  machines = (rate / (out_amount × out_mult)) × (time / (machine.speed × speed_mult))
+  其中 out_mult=1、speed_mult=1（未启用增产剂）；power = machines × usage × power_mult
+  递归展开时，子物品需求 = in_amount × cycles_per_s × 取整倍数
+  取整倍数: exact=1（按理论需求） / rounded=ceil(machines)/machines（按实际产能）
+
+-- A.2 生产树（exact 取整传播） -------------------------------------------------------
+- [制造] Electromagnetic Matrix          1/s   配方=electromagnetic-matrix     建筑=Matrix Lab             台数=3.0000
+  - [制造] Circuit Board                   1/s   配方=circuit-board              建筑=Assembling Machine Mk.III 台数=0.3333
+    - [制造] Copper Ingot                  0.5/s   配方=copper-ingot               建筑=Arc Smelter            台数=0.5000
+      - [矿脉] Copper Ore                    0.5/s   配方=copper-vein                建筑=Mining Machine         台数=1.0000   (矿脉（Mining Machine 1.000 台，单列统计）)
+    - [制造] Iron Ingot                      1/s   配方=iron-ingot                 建筑=Arc Smelter            台数=1.0000
+      - [矿脉] Iron Ore                        1/s   配方=iron-vein                  建筑=Mining Machine         台数=2.0000   (矿脉（Mining Machine 2.000 台，单列统计）)
+  - [制造] Magnetic Coil                   1/s   配方=magnetic-coil              建筑=Assembling Machine Mk.III 台数=0.3333
+    - [制造] Copper Ingot                  0.5/s   配方=copper-ingot               建筑=Arc Smelter            台数=0.5000
+      - [矿脉] Copper Ore                    0.5/s   配方=copper-vein                建筑=Mining Machine         台数=1.0000   (矿脉（Mining Machine 1.000 台，单列统计）)
+    - [制造] Magnet                          1/s   配方=magnet                     建筑=Arc Smelter            台数=1.5000
+      - [矿脉] Iron Ore                        1/s   配方=iron-vein                  建筑=Mining Machine         台数=2.0000   (矿脉（Mining Machine 2.000 台，单列统计）)
+
+-- A.3 建筑数量：实际 vs 手算 ---------------------------------------------------------
+  建筑                                   手算基准            求解器         偏差 判定
+  --------------------------------------------------------------------------
+  matrix-lab                       3.000000       3.000000   0.00e+00 PASS
+  assembling-machine-3             0.666667       0.666667   0.00e+00 PASS
+  arc-smelter                      3.500000       3.500000   0.00e+00 PASS
+
+-- A.3b 整数建设方案（按配方分组取整） ------------------------------------------------------
+  同一台机器不能同时跑两条配方，因此取整必须在「配方」粒度做，不能先合并台数。
+
+  配方                         建筑                             理论台数      建设台数
+  ------------------------------------------------------------------------
+  electromagnetic-matrix     matrix-lab                   3.0000         3
+  magnet                     arc-smelter                  1.5000         2
+  copper-ingot               arc-smelter                  1.0000         1
+  iron-ingot                 arc-smelter                  1.0000         1
+  circuit-board              assembling-machine-3         0.3333         1
+  magnetic-coil              assembling-machine-3         0.3333         1
+  按配方分组取整合计                  9 台
+  若先按机器合并再取整                 8 台  （会少算，见报告 §4.9）
+  说明: 电路板与磁线圈各需 1/3 台制造台，合并后 2/3 取整得 1，
+        实际必须各建 1 台共 2 台 —— 这就是两种口径的差额来源。
+
+-- A.4 原料需求：实际 vs 手算 ---------------------------------------------------------
+  原料                                   手算基准            求解器 判定
+  ---------------------------------------------------------------
+  iron-ore                         2.000000       2.000000 PASS
+  copper-ore                       1.000000       1.000000 PASS
+
+-- A.5 功耗 --------------------------------------------------------------------
+  手算基准 (kW)                  3420.000
+  求解器 (kW)                   3420.000
+  偏差 (kW)                    +0.00e+00
+  注: 仅计 usage（工作功耗），未计 drain（待机功耗）。FactorioLab 的 flags 中
+      'inactiveDrain' 表明待机功耗需单独建模，DSP Helper 亦忽略此项。
+
+-- A.6 物料守恒校验 ----------------------------------------------------------------
+    circuit-board              净流量    +0.0000/s   ok
+    copper-ingot               净流量    +0.0000/s   ok
+    copper-ore                 净流量    -1.0000/s   ok
+    electromagnetic-matrix     净流量    +1.0000/s   ok
+    iron-ingot                 净流量    +0.0000/s   ok
+    iron-ore                   净流量    -2.0000/s   ok
+    magnet                     净流量    +0.0000/s   ok
+    magnetic-coil              净流量    +0.0000/s   ok
+  （目标之外的物品净流量应为 0；目标自身应为 +1.0）
+
+-- A.7 取整传播策略对比 --------------------------------------------------------------
+  建筑                             exact 台数    rounded 台数         增量 ceil(exact)
+  ----------------------------------------------------------------------------
+  matrix-lab                       3.0000        3.0000    +0.0000           3
+  assembling-machine-3             0.6667        0.6667    +0.0000           1
+  arc-smelter                      3.5000       10.5000    +7.0000           4
+  原料(铁矿石): exact=2.0000/s  rounded=6.3333/s
+  原料(铜矿石): exact=1.0000/s  rounded=4.0000/s
+  说明: rounded 策略把每层向上取整后的富余产能继续向下游传导，
+        因此原料需求会系统性高于理论值 —— 这是真实建厂时的原料备料口径，
+        两者不能混用，必须由用户显式选择。
+
+-- A.8 结论 --------------------------------------------------------------------
+  [PASS] A1 速率传递 — 所有中间节点需求与手算一致
+  [PASS] A2 原料汇总 — 叶子资源需求与手算一致
+  [PASS] A3 建筑数量（小数） — 小数台数与公式完全一致（无取整损失）
+  [PASS] A3b 整数建设台数 — 按配方分组取整 = 9 台，手算基准 9 台（若按机器合并再取整则为 8 台，少算 1 台）
+  [PASS] A4 物料守恒 — 除目标外净流量全为 0
+  [PASS] A5 功耗 — usage 口径一致；drain 未建模（已知缺失）
+
+  判定汇总: PASS 6 · FAIL 0 · SKIP 0
+  总体判定: PASS
+  退出码  : 0
+  证据等级: 已通过独立测试验证（脚本 + 手算基准双向比对）

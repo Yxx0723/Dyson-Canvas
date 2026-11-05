@@ -1,0 +1,112 @@
+
+==============================================================================
+案例 F · 自研单纯形 vs 独立基准 vs GLPK
+==============================================================================
+游戏版本   : 0.10.29.21950
+数据来源   : factoriolab/factoriolab -> public/data/dsp/data.json
+源文件 SHA : 940d5d6eac72b250…  (268224 bytes)
+对照求解器      : GLPK 5.0 (/tmp/glpk/bin/glpsol)
+独立基准       : 顶点穷举（enumerate_optimum）+ 手算预期（ORACLE）
+说明         : 判定以 ORACLE 为准；GLPK 只作额外佐证，不作为通过的必要条件
+
+-- F.1 模型与预期（预期值来源见源码注释） -----------------------------------------------------
+  模型                           预期状态               预期最优值 最优解
+  ------------------------------------------------------------
+  F1 可行·唯一最优                   optimal              -12 唯一
+  F2 不可行                       infeasible             — —
+  F3 无界                        unbounded              — —
+  F4 退化·Beale 循环示例             optimal            -1/20 多解
+  F5 多解·无穷多最优                  optimal                0 多解
+  F6a DSP·氢气回路（含松弛）            optimal             62/3 多解
+  F6b DSP·多配方择优                optimal                3 多解
+  F6c DSP·无松弛不可行               infeasible             — —
+
+-- F.2 逐模型对照 -----------------------------------------------------------------
+  模型                           自实现状态                 自实现 z 判定
+  ---------------------------------------------------------------
+  F1 可行·唯一最优                   optimal          -12.000000 PASS
+  F2 不可行                       infeasible                — PASS
+  F3 无界                        unbounded                 — PASS
+  F4 退化·Beale 循环示例             optimal           -0.050000 PASS
+  F5 多解·无穷多最优                  optimal            0.000000 PASS
+  F6a DSP·氢气回路（含松弛）            optimal           20.666667 PASS
+  F6b DSP·多配方择优                optimal            3.000000 PASS
+  F6c DSP·无松弛不可行               infeasible                — PASS
+  · F1 可行·唯一最优
+      预期 optimal     z=-12
+      自实现 optimal     z=-12.0   [ok/ok/ok]
+      独立基准 枚举 z=-12 (可行极点 4)  [ok]
+      GLPK 一致
+  · F2 不可行
+      预期 infeasible  z=—
+      自实现 infeasible  z=—   [ok/ok/ok]
+      独立基准 枚举无可行极点  [ok]
+      GLPK 一致
+  · F3 无界
+      预期 unbounded   z=—
+      自实现 unbounded   z=—   [ok/ok/ok]
+      独立基准 射线证书成立  [ok]
+      GLPK 一致
+  · F4 退化·Beale 循环示例
+      预期 optimal     z=-1/20
+      自实现 optimal     z=-0.05   [ok/ok/ok]
+      独立基准 枚举 z=-1/20 (可行极点 19)  [ok]
+      GLPK 一致
+  · F5 多解·无穷多最优
+      预期 optimal     z=0
+      自实现 optimal     z=0.0   [ok/ok/ok]
+      独立基准 枚举 z=0 (可行极点 2)  [ok]
+      GLPK 一致
+  · F6a DSP·氢气回路（含松弛）
+      预期 optimal     z=62/3
+      自实现 optimal     z=20.666666666666668   [ok/ok/ok]
+      独立基准 枚举 z=62/3 (可行极点 10)  [ok]
+      GLPK 一致
+  · F6b DSP·多配方择优
+      预期 optimal     z=3
+      自实现 optimal     z=3.0   [ok/ok/ok]
+      独立基准 枚举 z=3 (可行极点 4)  [ok]
+      GLPK 一致
+  · F6c DSP·无松弛不可行
+      预期 infeasible  z=—
+      自实现 infeasible  z=—   [ok/ok/ok]
+      独立基准 枚举无可行极点  [ok]
+      GLPK 一致
+
+-- F.3 迭代上限（maxiter）不得被冒充为 optimal / infeasible ------------------------------
+  [PASS] F7 预算不足时报 maxiter 而非 infeasible — max_iter=1 → maxiter（phase=2），解为空
+    预算扫描（预期最优值 0）:
+      max_iter=1 → maxiter   z=—
+      max_iter=2 → optimal   z=0.0
+      max_iter=3 → optimal   z=0.0
+      max_iter=4 → optimal   z=0.0
+      max_iter=5 → optimal   z=0.0
+      max_iter=6 → optimal   z=0.0
+  [PASS] F8 任何预算下「报 optimal 就必须是最优值」 — 1..6 全部满足：maxiter 时无解、optimal 时值恒为 0
+  [PASS] F9 maxiter 不返回解（防止调用方误用） — 两次调用均无解返回，状态可重复
+  [PASS] F10 预算充足时恢复正常最优 — max_iter=5000 → optimal, z=0.0（预期 0）
+
+-- F.4 判定 --------------------------------------------------------------------
+  [PASS] F1 可行·唯一最优 — 状态 optimal（预期 optimal）；枚举 z=-12 (可行极点 4)；GLPK 一致
+  [PASS] F2 不可行 — 状态 infeasible（预期 infeasible）；枚举无可行极点；GLPK 一致
+  [PASS] F3 无界 — 状态 unbounded（预期 unbounded）；射线证书成立；GLPK 一致
+  [PASS] F4 退化·Beale 循环示例 — 状态 optimal（预期 optimal）；枚举 z=-1/20 (可行极点 19)；GLPK 一致
+  [PASS] F5 多解·无穷多最优 — 状态 optimal（预期 optimal）；枚举 z=0 (可行极点 2)；GLPK 一致
+  [PASS] F6a DSP·氢气回路（含松弛） — 状态 optimal（预期 optimal）；枚举 z=62/3 (可行极点 10)；GLPK 一致
+  [PASS] F6b DSP·多配方择优 — 状态 optimal（预期 optimal）；枚举 z=3 (可行极点 4)；GLPK 一致
+  [PASS] F6c DSP·无松弛不可行 — 状态 infeasible（预期 infeasible）；枚举无可行极点；GLPK 一致
+  [PASS] F11 第三方对照（GLPK） — 8 个模型在状态与目标值上与 GLPK 全部一致
+
+  判定汇总: PASS 13 · FAIL 0 · SKIP 0
+  总体判定: PASS
+  退出码  : 0
+
+  本次实际结果:
+    * 自实现与 ORACLE 一致: 8/8 个模型
+    * 第三方对照: 已完成（GLPK）
+    * 迭代上限状态: 见 F7-F10
+
+  ★ 无论本次结果如何，以下事实不变（不得因通过而淡化）:
+    * TypeScript 正式实现尚未编写，本案例只证明 Python 原型的算法思路；
+    * 规模边界未测（本案例最大 3 约束 × 9 变量）；
+    * 因此「自研 LP」仍为**候选方案**，不是锁定选型。

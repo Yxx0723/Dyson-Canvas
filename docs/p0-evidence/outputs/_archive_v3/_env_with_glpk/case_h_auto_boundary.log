@@ -1,0 +1,91 @@
+
+==============================================================================
+案例 H · 边界自动化（从真实上下游图推导求解子图）
+==============================================================================
+游戏版本   : 0.10.29.21950
+数据来源   : factoriolab/factoriolab -> public/data/dsp/data.json
+源文件 SHA : 940d5d6eac72b250…  (268224 bytes)
+循环分量       : 2 个，其中物料生产 1 个
+目标         : Casimir Crystal 1.0/s
+说明         : 本案例不手写任何矩阵元素或需求常量
+
+-- H.1 循环识别（自动） --------------------------------------------------------------
+  全部循环分量                     ['Accumulator', 'Accumulator (full)', 'Hydrogen', 'Refined Oil']
+  物料生产循环                     ['Hydrogen', 'Refined Oil']
+  状态往返配方（排除）                 ['accumulator-discharge', 'accumulator-full']
+
+-- H.2 边界与配方集（自动推导） ----------------------------------------------------------
+  环内物品（SCC）      : ['Hydrogen', 'Refined Oil']
+  入边物品（外部供给）  : ['Coal', 'Crude Oil']
+  出边物品（对外供应）  : ['Energetic Graphite']
+  平衡行               : ['Energetic Graphite', 'Hydrogen', 'Refined Oil']
+  入选配方（3 条）    : ['plasma-refining', 'reforming-refine', 'x-ray-cracking']
+    排除 accumulator-discharge        理由: 状态往返配方（净物料为零）
+    排除 accumulator-full             理由: 状态往返配方（净物料为零）
+    排除 energetic-graphite           理由: 不满足规则 A/B，未参与环路
+    排除 gas-giant                    理由: mining 采集配方（属外购通道，不是生产列）
+    排除 gas-giant-hydrogen           理由: mining 采集配方（属外购通道，不是生产列）
+    排除 graphene-advanced            理由: 产物越界: ['graphene']
+    排除 ice-giant                    理由: mining 采集配方（属外购通道，不是生产列）
+    排除 ice-giant-hydrogen           理由: mining 采集配方（属外购通道，不是生产列）
+    排除 mass-energy-storage          理由: 产物越界: ['antimatter']
+
+-- H.3 外部需求推导轨迹（自动汇总，可逐行复核） --------------------------------------------------
+  · casimir-crystal 1.0000/s ← casimir-crystal ×1.0000
+    · graphene 2.0000/s ← graphene ×1.0000
+      ⊣ energetic-graphite +3.0000/s（边界物品，停止展开）
+      · sulfuric-acid 1.0000/s ← sulfuric-acid ×0.2500
+        ⊣ refined-oil +1.5000/s（边界物品，停止展开）
+        · stone 2.0000/s ← stone-vein ×2.0000
+        · water 1.0000/s ← ocean ×1.0000
+    ⊣ hydrogen +12.0000/s（边界物品，停止展开）
+    · titanium-crystal 1.0000/s ← titanium-crystal ×1.0000
+      · organic-crystal 1.0000/s ← organic-crystal ×1.0000
+        · plastic 2.0000/s ← plastic ×2.0000
+          ⊣ energetic-graphite +2.0000/s（边界物品，停止展开）
+          ⊣ refined-oil +4.0000/s（边界物品，停止展开）
+        ⊣ refined-oil +1.0000/s（边界物品，停止展开）
+        · water 1.0000/s ← ocean ×1.0000
+      · titanium-ingot 3.0000/s ← titanium-ingot ×3.0000
+        · titanium-ore 6.0000/s ← titanium-vein ×6.0000
+
+  边界物品                     id                               外部需求/s
+  ----------------------------------------------------------------
+  Energetic Graphite       energetic-graphite               5.0000
+  Refined Oil              refined-oil                      6.5000
+  Hydrogen                 hydrogen                        12.0000
+
+-- H.4 与案例 D 人工模型的交叉验证 -------------------------------------------------------
+  [PASS] H1 配方集与人工挑选一致 — 自动 ['plasma-refining', 'reforming-refine', 'x-ray-cracking']；人工 ['plasma-refining', 'reforming-refine', 'x-ray-cracking']
+  [PASS] H2 外部需求与人工常量一致 — 精炼油 6.5 / 氢气 12 / 高能石墨 5 三项逐项相等，无多余边界行
+
+-- H.5 换一个目标产物，验证推导不是硬编码 -----------------------------------------------------
+  目标                         能量矩阵 2/s
+  边界行                        ['Energetic Graphite', 'Hydrogen', 'Refined Oil']
+  外部需求                       {'Energetic Graphite': 4.0, 'Hydrogen': 4.0, 'Refined Oil': 0.0}
+  [PASS] H3 不同目标下的需求独立成立 — 能量矩阵 2/s → 氢 4.0000/s（手算 4.0000）、高能石墨 4.0000/s（手算 4.0000）
+
+-- H.6 用自动模型求解并做全局守恒校验 -------------------------------------------------------
+  松弛列可用性（由 policy 按数据判定，不是人为开关）:
+    Energetic Graphite   外购✗  焚烧✓  （无 mining 配方；可进火电站）
+    Hydrogen             外购✓  焚烧✓  （有采集来源；可进火电站）
+    Refined Oil          外购✗  焚烧✓  （无 mining 配方；可进火电站）
+
+  LP 状态                      optimal
+  配方速率:
+    plasma-refining            6.1667 次/s
+    reforming-refine           0.0000 次/s
+    x-ray-cracking             5.8333 次/s
+  边界物品平衡:
+    Energetic Graphite   产   5.8333 - 耗   0.0000 + 外购  0.0000 - 放空  0.8333 =   5.0000  期望  5.0000  ok
+    Hydrogen             产  12.0000 - 耗  -0.0000 + 外购  0.0000 - 放空  0.0000 =  12.0000  期望 12.0000  ok
+    Refined Oil          产  12.3333 - 耗   5.8333 + 外购  0.0000 - 放空  0.0000 =   6.5000  期望  6.5000  ok
+  [PASS] H4 全局物料守恒 — 每个边界物品：产-耗+外购-放空 = 外部需求（容差 1e-6）
+  [PASS] H4b 解未退化为「全部外购」 — 精炼油由环路生产 6.5000/s（它没有 mining 来源，若靠外购则模型非法）
+  [PASS] H5 环外共享需求合并 — 精炼油被 3 条下游路径消费，合并为 6.5000/s（6.5000），未重复计数
+  [PASS] H6 出边副产物有归属 — 高能石墨进平衡行：环路产 5.8333/s，放空 0.8333/s，需求 5.0000/s，账面对得上
+
+  判定汇总: PASS 7 · FAIL 0 · SKIP 0
+  总体判定: PASS
+  退出码  : 0
+  证据等级: 已通过独立测试验证（边界与需求均由真实图自动推导，并与案例 D 的人工结果交叉比对）

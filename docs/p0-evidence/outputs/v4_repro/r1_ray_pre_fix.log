@@ -1,0 +1,7 @@
+=== 反例 1: min -x  s.t.  -x = -1,  x>=0 ===
+真实解: x=1, z=-1, 有界
+has_negative_ray -> True
+simplex         -> optimal z= -1.0 x= [1.0]
+glpsol found    -> /tmp/glpk/bin/glpsol
+glpk            -> optimal x= [1.0]
+

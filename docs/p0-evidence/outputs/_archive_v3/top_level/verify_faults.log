@@ -1,0 +1,56 @@
+==============================================================================
+退出码自检：正常路径必须成功，注入故障必须失败
+==============================================================================
+
+  case_a_basic_chain.py  +  P0_FAULT=machines_merge
+    目的       : 设备取整退回「先按机器合并」，A3b 应报 8 台而非 9 台
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 A3b 整数建设台数
+    结论       : 有效守卫
+
+  case_d_hydrogen_loop.py  +  P0_FAULT=scc_none
+    目的       : 循环检测返回空，D1 应失败
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 D1 循环存在性
+    结论       : 有效守卫
+
+  case_f_lp_validation.py  +  P0_FAULT=lp_all_infeasible
+    目的       : 求解器全报不可行，与 ORACLE 不符应失败
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 FAIL
+    结论       : 有效守卫
+
+  case_f_lp_validation.py  +  P0_FAULT=lp_maxiter
+    目的       : 强制预算 1，F10 应失败（否则 maxiter 又被当成 optimal）
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 FAIL
+    结论       : 有效守卫
+
+  case_g_boundary_policy.py  +  P0_FAULT=policy_fuel_all
+    目的       : 把「有 fuel」当可燃，chemical 数量应变成 27 而非 21
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 G1 燃料按类型分派设施
+    结论       : 有效守卫
+
+  case_g_boundary_policy.py  +  P0_FAULT=lp_all_infeasible
+    目的       : 求解器无解时，G3-G6 应明确判失败而不是让脚本抛异常
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 G5 字典序解满足全部需求
+    结论       : 有效守卫
+
+  stats.py  +  P0_FAULT=graph_missing_output
+    目的       : 构图退化为旧实现，节点统计断言应触发
+    正常       : exit=0  OK
+    注入故障   : exit=1  OK
+    失败标记   : 命中 未建键
+    结论       : 有效守卫
+
+------------------------------------------------------------------------------
+  有效守卫 7/7
+  总体: PASS
